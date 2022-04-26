@@ -8,10 +8,35 @@ from matplotlib import image
 import numpy as np
 import cv2
 import io
+import json
+
+
 
 app= Flask(__name__)
 global model
 global ocr_model
+
+
+
+# Encoding numpy to json
+class NumpyEncoder(json.JSONEncoder):
+    '''
+    Encoding numpy into json
+    '''
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, np.int32):
+            return int(obj)
+        if isinstance(obj, np.int64):
+            return int(obj)
+        if isinstance(obj, np.float32):
+            return float(obj)
+        if isinstance(obj, np.float64):
+            return float(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
 
 @app.route("/", methods=["GET"])
 def _hello_world():
@@ -19,7 +44,10 @@ def _hello_world():
 
 @app.route("/upload", methods=["POST"])
 def _upload():
+	data = {"success": False}
 	if request.files.get('image'):
+		
+		
 		image  = request.files['image'].read()
 		image = Image.open(io.BytesIO(image)).convert('RGB')
 		cvImage = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
@@ -37,15 +65,18 @@ def _upload():
 		# cv2.waitKey(0)
 		# cv2.destroyAllWindows()
 
-		
+		strPosition = str(x)+' '+str(y)+' '+str(w)+' '+str(h)
 		position, res = ocr_model.ocr(cropImg)[0]
 		ans,ac = res
 		print(ans, ac)
-		return ans
+		#data["predict"] = dict("ans",ans)
+		data["predict"] = {"ans":ans,"position":strPosition}
+		data["success"] = True
+		return json.dumps(data, ensure_ascii=False, cls=NumpyEncoder)
 
 		
 if __name__ == "__main__":
 	print("App run!")
 	model = torch.hub.load('ultralytics/yolov5','custom' ,'best_YoLov5.pt',force_reload=True)
 	ocr_model = PaddleOCR(lang='en')
-	app.run(debug=False, host="127.0.0.1", threaded=False)
+	app.run(debug=False, host="192.168.1.5", threaded=False)
