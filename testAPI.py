@@ -3,7 +3,7 @@ from cv2 import destroyWindow, waitKey
 import torch
 from paddleocr import PaddleOCR
 from PIL import Image
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from matplotlib import image
 import numpy as np
 import cv2
@@ -35,6 +35,10 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.float64):
             return float(obj)
         return json.JSONEncoder.default(self, obj)
+	
+
+
+
 
 
 
@@ -72,11 +76,12 @@ def _upload():
 		#data["predict"] = dict("ans",ans)
 		data["predict"] = {"ans":ans,"position":strPosition}
 		data["success"] = True
-		return json.dumps(data, ensure_ascii=False, cls=NumpyEncoder)
+		return jsonify({"success":str(data["success"]),"predict": str(ans),"position":strPosition})
+		#return json.dumps(data, ensure_ascii=False, cls=NumpyEncoder)
 
 		
 if __name__ == "__main__":
 	print("App run!")
 	model = torch.hub.load('ultralytics/yolov5','custom' ,'best_YoLov5.pt',force_reload=True)
 	ocr_model = PaddleOCR(lang='en')
-	app.run(debug=False, host="192.168.1.5", threaded=False)
+	app.run(debug=False, host="192.168.31.81", threaded=False)
