@@ -3,7 +3,7 @@ from cv2 import destroyWindow, waitKey
 import torch
 from paddleocr import PaddleOCR
 from PIL import Image
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from matplotlib import image
 import numpy as np
 import cv2
@@ -39,15 +39,12 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 
-
-
-
 @app.route("/", methods=["GET"])
 def _hello_world():
 	return "Hi Thùy"
 
 @app.route("/upload", methods=["POST"])
-def _upload():
+def upload():
 	data = {"success": False}
 	if request.files.get('image'):
 		
@@ -76,7 +73,16 @@ def _upload():
 		#data["predict"] = dict("ans",ans)
 		data["predict"] = {"ans":ans,"position":strPosition}
 		data["success"] = True
-		return jsonify({"success":str(data["success"]),"predict": str(ans),"position":strPosition})
+
+		#ehe = make_response("Hello, World!")
+		#hehe.headers['server']='ASD'
+		print(jsonify({"success":str(data["success"]),"predict": str(ans),"position":strPosition}))
+		#return hehe
+		hehe = jsonify({"success":str(data["success"]),"predict": str(ans),"position":strPosition})
+		hehe.headers['server']=str({"ans":ans,"position":strPosition})
+		return hehe
+
+		#return json.dumps(data, ensure_ascii=False)
 		#return json.dumps(data, ensure_ascii=False, cls=NumpyEncoder)
 
 		
@@ -84,4 +90,4 @@ if __name__ == "__main__":
 	print("App run!")
 	model = torch.hub.load('ultralytics/yolov5','custom' ,'best_YoLov5.pt',force_reload=True)
 	ocr_model = PaddleOCR(lang='en')
-	app.run(debug=False, host="192.168.31.81", threaded=False)
+	app.run(debug=False, host="192.168.43.252", threaded=False)
